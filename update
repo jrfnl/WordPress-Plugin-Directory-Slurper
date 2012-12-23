@@ -87,11 +87,14 @@ if ( $last_revision != $svn_last_revision ) {
 		$plugin = urldecode( $plugin );
 		echo 'Updating ' . $plugin;
 
-		$output = null;
-		$return = null;
-		exec( 'wget -q -np -O ' . escapeshellarg( sprintf( $download, $plugin ) ) . ' ' . escapeshellarg( sprintf( $url, $plugin ) ) . ' > /dev/null', $output, $return );
+		$ch   = curl_init();
+		$path = sprintf( $download, $plugin );
+		$file = fopen( $path, 'w' );
+		curl_setopt( $ch, CURLOPT_URL, sprintf( $url, $plugin ) );
+		curl_setopt( $ch, CURLOPT_FILE, $file );
+		curl_exec( $ch );
 
-		if ( $return === 0 && file_exists( sprintf( $download, $plugin ) ) ) {
+		if ( 0 === curl_errno( $ch ) && file_exists( $path ) ) {
 
 			if ( $type === 'all' ) {
 
@@ -106,6 +109,9 @@ if ( $last_revision != $svn_last_revision ) {
 
 			echo '... download failed.';
 		}
+
+		curl_close( $ch );
+		fclose( $file );
 		echo "\r\n";
 	}
 
