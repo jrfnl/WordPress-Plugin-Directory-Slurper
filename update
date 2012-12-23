@@ -11,7 +11,7 @@ switch ( $type ) {
 
 	case 'readme':
 		$directory = 'readmes';
-		$download  = 'readmes/%s.readme';
+		$download  = 'readmes/%s.txt';
 		$url       = 'http://plugins.svn.wordpress.org/%s/trunk/readme.txt';
 		break;
 
