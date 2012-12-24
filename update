@@ -141,7 +141,7 @@ echo 'It took ' . number_format( $minutes ) . ' minute' . ( $minutes == 1 ? '' :
 echo "[DONE]\r\n";
 
 /**
- * Delete file/directroy recursively. Based on WP_Filesystem_Direct->delete() because GPL.
+ * Delete file/directory recursively. Based on WP_Filesystem_Direct->delete() because GPL.
  *
  * @param string $file
  *
