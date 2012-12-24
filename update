@@ -93,16 +93,29 @@ if ( $last_revision != $svn_last_revision ) {
 		curl_setopt( $ch, CURLOPT_URL, sprintf( $url, $plugin ) );
 		curl_setopt( $ch, CURLOPT_FILE, $file );
 		curl_exec( $ch );
+		$errno = curl_errno( $ch );
+		curl_close( $ch );
+		fclose( $file );
 
-		if ( 0 === curl_errno( $ch ) && file_exists( $path ) ) {
+		if ( 0 === $errno && file_exists( $path ) ) {
 
-			if ( $type === 'all' ) {
+			if ( 'all' === $type ) {
 
 				if ( file_exists( 'plugins/' . $plugin ) )
-					exec( 'rm -rf ' . escapeshellarg( 'plugins/' . $plugin ) );
+					delete( 'plugins/' . $plugin );
 
-				exec( 'unzip -o -d plugins ' . escapeshellarg( 'zips/' . $plugin . '.zip' ) );
-				exec( 'rm -rf ' . escapeshellarg( 'zips/' . $plugin . '.zip' ) );
+				$zip = new ZipArchive;
+
+				if ( true === $zip->open( $path ) ) {
+
+					$zip->extractTo( 'plugins' );
+					$zip->close();
+				}
+				else {
+					echo '... extract failed';
+				}
+
+				unlink( $path );
 			}
 		}
 		else {
@@ -110,8 +123,6 @@ if ( $last_revision != $svn_last_revision ) {
 			echo '... download failed.';
 		}
 
-		curl_close( $ch );
-		fclose( $file );
 		echo "\r\n";
 	}
 
@@ -128,3 +139,36 @@ $seconds  = ( $end_time - $start_time ) % 60;
 echo "[SUCCESS] Done updating plugins!\r\n";
 echo 'It took ' . number_format( $minutes ) . ' minute' . ( $minutes == 1 ? '' : 's' ) . ' and ' . $seconds . ' second' . ( $seconds == 1 ? '' : 's' ) . ' to update ' . count( $plugins ) . ' plugin' . ( count( $plugins ) == 1 ? '' : 's' ) . "\r\n";
 echo "[DONE]\r\n";
+
+/**
+ * Delete file/directroy recursively. Based on WP_Filesystem_Direct->delete() because GPL.
+ *
+ * @param string $file
+ *
+ * @return bool
+ */
+function delete( $file ) {
+
+	if ( empty( $file ) ) //Some filesystems report this as /, which can cause non-expected recursive deletion of all files in the filesystem.
+		return false;
+
+	$file = str_replace( '\\', '/', $file ); //for win32, occasional problems deleting files otherwise
+
+	if ( is_file( $file ) )
+		return unlink( $file );
+
+	//At this point its a folder, and we're in recursive mode
+	$filelist = glob( $file . '/*', GLOB_MARK );
+	$retval   = true;
+
+	foreach ( $filelist as $filename ) {
+
+		if ( ! delete( $filename ) )
+			$retval = false;
+	}
+
+	if ( file_exists( $file ) && ! rmdir( $file ) )
+		$retval = false;
+
+	return $retval;
+}
