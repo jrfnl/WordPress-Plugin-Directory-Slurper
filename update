@@ -81,6 +81,7 @@ if ( $last_revision != $svn_last_revision ) {
 	}
 
 	$results = array(
+		'success'         => array(),
 		'download_failed' => array(),
 		'extract_failed'  => array(),
 	);
@@ -114,6 +115,7 @@ if ( $last_revision != $svn_last_revision ) {
 
 					$zip->extractTo( 'plugins' );
 					$zip->close();
+					$results['success'][] = $plugin;
 				}
 				else {
 					echo ' ... extract failed';
@@ -174,7 +176,7 @@ echo "[RESULT SUMMARY]\r\n";
 echo 'Downloads attempted : ', count( $plugins ), "\r\n";
 echo 'Downloads failed    : ', count( $results['download_failed'] ), "\r\n";
 echo 'Zip extract failed  : ', count( $results['extract_failed'] ), "\r\n";
-echo 'Succesfully updated : ', ( count( $plugins ) - count( $results['download_failed'] ) - count( $results['extract_failed'] ) ), "\r\n";
+echo 'Succesfully updated : ', count( $results['success'] ), "\r\n";
 echo "--------------------------------\r\n";
 echo "[DONE]\r\n";
 
