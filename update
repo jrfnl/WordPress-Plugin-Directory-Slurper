@@ -119,7 +119,7 @@ if ( $last_revision != $svn_last_revision ) {
 				}
 				else {
 					echo ' ... extract failed';
-					$results['extract_failed'][ $plugin ] = $path . '(size: ' . filesize( $path ) . ' bytes)';
+					$results['extract_failed'][ $plugin ] = $path . ' (file size: ' . filesize( $path ) . ' bytes)';
 				}
 
 				unlink( $path );
