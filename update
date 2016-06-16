@@ -2,6 +2,12 @@
 <?php
 $args = $argv;
 $cmd  = array_shift( $args );
+$results = array(
+	'success'         => array(),
+	'download_failed' => array(),
+	'extract_failed'  => array(),
+);
+
 $type = 'all';
 
 if ( ! empty( $args[0] ) )
@@ -80,12 +86,6 @@ if ( $last_revision != $svn_last_revision ) {
 		$plugins = $matches[1];
 	}
 
-	$results = array(
-		'success'         => array(),
-		'download_failed' => array(),
-		'extract_failed'  => array(),
-	);
-
 	foreach ( $plugins as $plugin ) {
 
 		$plugin = urldecode( $plugin );
@@ -119,17 +119,16 @@ if ( $last_revision != $svn_last_revision ) {
 				}
 				else {
 					echo ' ... extract failed';
-					$results['extract_failed'][ $plugin ] = $plugin;
+					$results['extract_failed'][ $plugin ] = $path . '(size: ' . filesize( $path ) . ' bytes)';
 				}
 
 				unlink( $path );
 			}
 		}
 		else {
-
 			echo ' ... download failed.', "\r\n";
 			echo 'Error no: ', $errno, "\r\n";
-			$results['download_failed'][ $plugin ] = $errno;
+			$results['download_failed'][ $plugin ] = 'Error:' . $errno . ' for download url : ' . sprintf( $url, $plugin );
 		}
 
 		echo "\r\n";
@@ -142,27 +141,7 @@ if ( $last_revision != $svn_last_revision ) {
 		echo "[ERROR] Could not update $directory/.last-revision to " . $svn_last_revision . "\r\n";
 	}
 
-	if ( count( $results['download_failed'] ) > 0 ) {
-		$file_content = var_export( $results['download_failed'], true );
-		if ( file_put_contents( $directory . '/failed_downloads.txt', $file_content ) ) {
-			echo "[RESULTS] Updated $directory/failed_downloads.txt with the names of the plugins for which the download failed.\r\n";
-		}
-		else {
-			echo "[ERROR] Could not update $directory/failed_downloads.txt.\r\n";
-		}
-		unset( $file_content );
-	}
-
-	if ( count( $results['extract_failed'] ) > 0 ) {
-		$file_content = implode( "\r\n", $results['extract_failed'] );
-		if ( file_put_contents( $directory . '/failed_extracts.txt', $file_content ) ) {
-			echo "[RESULTS] Updated $directory/failed_extracts.txt with the names of the plugins for which the extract failed.\r\n";
-		}
-		else {
-			echo "[ERROR] Could not update $directory/failed_extracts.txt.\r\n";
-		}
-		unset( $file_content );
-	}
+	log_run_results( $results );
 }
 
 $end_time = time();
@@ -170,7 +149,7 @@ $minutes  = ( $end_time - $start_time ) / 60;
 $seconds  = ( $end_time - $start_time ) % 60;
 
 echo "[SUCCESS] Done updating plugins!\r\n";
-echo 'It took ' . number_format( $minutes ) . ' minute' . ( $minutes == 1 ? '' : 's' ) . ' and ' . $seconds . ' second' . ( $seconds == 1 ? '' : 's' ) . ' to update ' . count( $plugins ) . ' plugin' . ( count( $plugins ) == 1 ? '' : 's' ) . "\r\n";
+echo 'It took ' . number_format( $minutes ) . ' minute' . ( $minutes == 1 ? '' : 's' ) . ' and ' . $seconds . ' second' . ( $seconds == 1 ? '' : 's' ) . ' to update ' . count( $results['success'] ) . ' plugin' . ( count( $results['success'] ) == 1 ? '' : 's' ) . "\r\n";
 echo "--------------------------------\r\n";
 echo "[RESULT SUMMARY]\r\n";
 echo 'Downloads attempted : ', count( $plugins ), "\r\n";
@@ -197,7 +176,7 @@ function delete( $file ) {
 	if ( is_file( $file ) )
 		return unlink( $file );
 
-	//At this point its a folder, and we're in recursive mode
+	//At this point it's a folder, and we're in recursive mode
 	$filelist = glob( $file . '/*', GLOB_MARK );
 	$retval   = true;
 
@@ -211,4 +190,30 @@ function delete( $file ) {
 		$retval = false;
 
 	return $retval;
+}
+
+
+/**
+ * Create a log file for failed slurps.
+ *
+ * @param array  $results An array of run results.
+ */
+function log_run_results( $results ) {
+	$date = date( 'Y-m-d-H.i.s' );
+
+	unset( $results['success'] );
+	
+	foreach ( $results as $key => $result ) {
+		if ( count( $result ) > 0 ) {
+			$file_content = var_export( $result, true );
+			$filename     = $GLOBALS['directory'] . '/' . $date . '_' . $key . '.log';
+			if ( file_put_contents( $filename, $file_content ) ) {
+				echo "[RESULTS] Created $filename with the names of the themes which encountered a failure of the type: $key.\r\n";
+			}
+			else {
+				echo "[ERROR] Could not create $filename.\r\n";
+			}
+			unset( $file_content, $filename );
+		}
+	}
 }
