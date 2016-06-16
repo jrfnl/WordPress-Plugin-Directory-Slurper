@@ -210,7 +210,7 @@ function log_run_results( $results ) {
 			$file_content = var_export( $result, true );
 			$filename     = 'logs/' . $date . '_' . $key . '.log';
 			if ( file_put_contents( $filename, $file_content ) ) {
-				echo "[RESULTS] Created $filename with the names of the themes which encountered a failure of the type: $key.\r\n";
+				echo "[RESULTS] Created $filename with the names of the plugins which encountered a failure of the type: $key.\r\n";
 			}
 			else {
 				echo "[ERROR] Could not create $filename.\r\n";
