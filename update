@@ -172,6 +172,7 @@ function delete( $file ) {
 		return false;
 
 	$file = str_replace( '\\', '/', $file ); //for win32, occasional problems deleting files otherwise
+	$file = str_replace( '//', '/', $file ); //for win32, occasional problems deleting files otherwise
 
 	if ( is_file( $file ) )
 		return unlink( $file );
@@ -186,7 +187,8 @@ function delete( $file ) {
 			$retval = false;
 	}
 
-	if ( file_exists( $file ) && ! rmdir( $file ) )
+	// Build in micro-delay for filesystem to catch up with deletions.
+	if ( file_exists( $file ) && usleep( 100 ) && ! rmdir( $file ) )
 		$retval = false;
 
 	return $retval;
@@ -206,7 +208,7 @@ function log_run_results( $results ) {
 	foreach ( $results as $key => $result ) {
 		if ( count( $result ) > 0 ) {
 			$file_content = var_export( $result, true );
-			$filename     = $GLOBALS['directory'] . '/' . $date . '_' . $key . '.log';
+			$filename     = 'logs/' . $date . '_' . $key . '.log';
 			if ( file_put_contents( $filename, $file_content ) ) {
 				echo "[RESULTS] Created $filename with the names of the themes which encountered a failure of the type: $key.\r\n";
 			}
