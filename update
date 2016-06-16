@@ -134,14 +134,14 @@ if ( $last_revision != $svn_last_revision ) {
 		echo "\r\n";
 	}
 
+	log_run_results( $results );
+
 	if ( file_put_contents( $directory . '/.last-revision', $svn_last_revision ) ) {
 		echo "[CLEANUP] Updated $directory/.last-revision to " . $svn_last_revision . "\r\n";
 	}
 	else {
 		echo "[ERROR] Could not update $directory/.last-revision to " . $svn_last_revision . "\r\n";
 	}
-
-	log_run_results( $results );
 }
 
 $end_time = time();
